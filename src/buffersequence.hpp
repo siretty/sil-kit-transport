@@ -6,13 +6,32 @@
 #include <memory>
 #include <type_traits>
 #include <vector>
+#include <list>
 
 
 namespace SilKitTransport {
 
+template <typename Void>
+class Buffer;
+
 
 template <typename Void>
-class Buffer
+struct IBufferSequence
+{
+    ~IBufferSequence() = default;
+
+    virtual auto GetSequenceItem(size_t index) const -> Buffer<Void> = 0;
+
+    virtual auto GetSequenceSize() const -> size_t = 0;
+};
+
+
+using IMutableBufferSequence = IBufferSequence<void>;
+using IConstBufferSequence = IBufferSequence<const void>;
+
+
+template <typename Void>
+class Buffer : public IBufferSequence<Void>
 {
     Void* _data{nullptr};
     size_t _size{0};
@@ -48,6 +67,15 @@ public:
         }
     }
 
+public: // IBufferSequence<Void>
+    auto GetSequenceItem(size_t index) const -> Buffer<Void> override
+    {
+        (void)(index);
+        return *this;
+    }
+
+    auto GetSequenceSize() const -> size_t override { return 1; }
+
 private:
     static_assert(std::is_same<std::remove_cv_t<Void>, void>::value, "");
 
@@ -72,19 +100,27 @@ using ConstBuffer = Buffer<const void>;
 
 
 template <typename Void>
-class BufferSequence
+class BufferSpan : public IBufferSequence<Void>
 {
+    Buffer<Void>* _first{nullptr};
+    size_t _size{0};
+
 public:
-    BufferSequence() = default;
+    BufferSpan() = default;
 
-    void AppendBuffer(Buffer<Void> buffer)
+    BufferSpan(Buffer<void>* first, size_t size)
+        : _first{first}
+        , _size{size}
     {
-
     }
+
+    auto GetSequenceItem(size_t index) const -> Buffer<Void> override { return *(_first + index); }
+
+    auto GetSequenceSize() const -> size_t override { return _size; }
 };
 
-using MutableBufferSequence = BufferSequence<void>;
-using ConstBufferSequence = BufferSequence<const void>;
+using MutableBufferSpan = BufferSpan<void>;
+using ConstBufferSpan = BufferSpan<const void>;
 
 
 } // namespace SilKitTransport

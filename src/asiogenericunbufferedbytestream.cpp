@@ -1,7 +1,6 @@
 #include "asiogenericunbufferedbytestream.hpp"
 
 #include "exceptions.hpp"
-#include "log.hpp"
 
 #include <iostream>
 #include <string>
@@ -10,29 +9,29 @@
 namespace SilKitTransport {
 
 
-namespace {
-
-auto FormatEndpoint(const asio::generic::stream_protocol::endpoint &ep) -> std::string
-{
-    const auto protocol = ep.protocol().protocol();
-
-    std::ostringstream ss;
-    if (protocol == asio::ip::tcp::v4().protocol())
-    {
-        ss << reinterpret_cast<const asio::ip::tcp::endpoint &>(ep);
-    }
-    else if (protocol == asio::local::stream_protocol().protocol())
-    {
-        ss << reinterpret_cast<const asio::ip::tcp::endpoint &>(ep);
-    }
-    else
-    {
-        ss << "unknown protocol endpoint";
-    }
-    return ss.str();
-}
-
-} // namespace
+//namespace {
+//
+//auto FormatEndpoint(const asio::generic::stream_protocol::endpoint &ep) -> std::string
+//{
+//    const auto protocol = ep.protocol().protocol();
+//
+//    std::ostringstream ss;
+//    if (protocol == asio::ip::tcp::v4().protocol())
+//    {
+//        ss << reinterpret_cast<const asio::ip::tcp::endpoint &>(ep);
+//    }
+//    else if (protocol == asio::local::stream_protocol().protocol())
+//    {
+//        ss << reinterpret_cast<const asio::ip::tcp::endpoint &>(ep);
+//    }
+//    else
+//    {
+//        ss << "unknown protocol endpoint";
+//    }
+//    return ss.str();
+//}
+//
+//} // namespace
 
 
 AsioGenericUnbufferedByteStream::AsioGenericUnbufferedByteStream(AsioSocket socket)
@@ -43,16 +42,11 @@ AsioGenericUnbufferedByteStream::AsioGenericUnbufferedByteStream(AsioSocket sock
 
 void AsioGenericUnbufferedByteStream::SetUp(IUnbufferedByteStreamListener &listener)
 {
-    if (_listener != nullptr)
-    {
-        throw ByteStreamNotSetUpError{};
-    }
-
     _listener = &listener;
 }
 
 
-void AsioGenericUnbufferedByteStream::ReadSome(void *data, size_t size)
+void AsioGenericUnbufferedByteStream::ReadSome(const IMutableBufferSequence &bufferSequence)
 {
     if (_reading)
     {
@@ -65,13 +59,21 @@ void AsioGenericUnbufferedByteStream::ReadSome(void *data, size_t size)
     }
 
     _reading = true;
-    _socket.async_read_some(asio::buffer(data, size), [this](const auto &e, auto s) {
+
+    _readBufferSequence.resize(bufferSequence.GetSequenceSize());
+    for (size_t index = 0; index != bufferSequence.GetSequenceSize(); ++index)
+    {
+        const auto buffer = bufferSequence.GetSequenceItem(index);
+        _readBufferSequence[index] = asio::mutable_buffer(buffer.GetData(), buffer.GetSize());
+    }
+
+    _socket.async_read_some(_readBufferSequence, [this](const auto &e, auto s) {
         OnReadSomeComplete(e, s);
     });
 }
 
 
-void AsioGenericUnbufferedByteStream::WriteSome(const void *data, size_t size)
+void AsioGenericUnbufferedByteStream::WriteSome(const IConstBufferSequence &bufferSequence)
 {
     if (_writing)
     {
@@ -83,8 +85,15 @@ void AsioGenericUnbufferedByteStream::WriteSome(const void *data, size_t size)
         return;
     }
 
+    _writeBufferSequence.resize(bufferSequence.GetSequenceSize());
+    for (size_t index = 0; index != bufferSequence.GetSequenceSize(); ++index)
+    {
+        const auto buffer = bufferSequence.GetSequenceItem(index);
+        _writeBufferSequence[index] = asio::const_buffer(buffer.GetData(), buffer.GetSize());
+    }
+
     _writing = true;
-    _socket.async_write_some(asio::buffer(data, size), [this](const auto &e, auto s) {
+    _socket.async_write_some(_writeBufferSequence, [this](const auto &e, auto s) {
         OnWriteSomeComplete(e, s);
     });
 }

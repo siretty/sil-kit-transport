@@ -1,3 +1,10 @@
+int main()
+{
+    //
+}
+
+/*
+
 #include "ibytestream.hpp"
 #include "asiogenericbytestream.hpp"
 #include "log.hpp"
@@ -92,3 +99,5 @@ int main()
 
     return 0;
 }
+
+ */

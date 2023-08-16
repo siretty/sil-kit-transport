@@ -1,28 +1,33 @@
 
 add_library("${PROJECT_NAME}"
-    ibytestream.cpp
-    imessagestream.cpp
 
-    byteorder.cpp
-    exceptions.cpp
-    log.cpp
+        exceptions.cpp
 
-    asiogenericbytestream.cpp
-    messagestream.cpp
-    buffersequence.cpp
-    buffersequence.hpp
-    iunbufferedbytestream.cpp
-    iunbufferedbytestream.hpp
-    asiogenericunbufferedbytestream.cpp
-    asiogenericunbufferedbytestream.hpp
+        buffersequence.cpp
+        buffersequence.hpp
+        iunbufferedbytestream.cpp
+        iunbufferedbytestream.hpp
+        asiogenericunbufferedbytestream.cpp
+        asiogenericunbufferedbytestream.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}"
-    PUBLIC asio
+        PUBLIC asio
 )
 
 target_include_directories("${PROJECT_NAME}"
-    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+
+add_executable("${PROJECT_NAME}-TestRunner"
+        asiogenericunbufferedbytestream-test.cpp
+)
+
+target_link_libraries("${PROJECT_NAME}-TestRunner"
+        PRIVATE "${PROJECT_NAME}"
+        PRIVATE GTest::gtest_main
+        PRIVATE GTest::gmock
 )
 
 

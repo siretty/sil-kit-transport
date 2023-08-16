@@ -24,6 +24,9 @@ class AsioGenericUnbufferedByteStream final : public IUnbufferedByteStream
     bool _reading{false};
     bool _writing{false};
 
+    std::vector<asio::mutable_buffer> _readBufferSequence;
+    std::vector<asio::const_buffer> _writeBufferSequence;
+
     AsioSocket _socket;
 
 public:
@@ -32,9 +35,9 @@ public:
 public: // IByteStream
     void SetUp(IUnbufferedByteStreamListener &listener) override;
 
-    void ReadSome(void *data, size_t size) override;
+    void ReadSome(const IMutableBufferSequence &bufferSequence) override;
 
-    void WriteSome(const void *data, size_t size) override;
+    void WriteSome(const IConstBufferSequence &bufferSequence) override;
 
     void Close() override;
 

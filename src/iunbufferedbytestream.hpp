@@ -2,6 +2,8 @@
 #define SILKITTRANSPORT_SRC_IUNBUFFEREDBYTESTREAM_HPP_35ECAABEC6A8445AAC30201FE08AD10B
 
 
+#include "buffersequence.hpp"
+
 #include <cstddef>
 
 #include <system_error>
@@ -19,12 +21,13 @@ struct IUnbufferedByteStream
 
     virtual void SetUp(IUnbufferedByteStreamListener& listener) = 0;
 
-    virtual void ReadSome(void* data, size_t size) = 0;
+    virtual void ReadSome(const IMutableBufferSequence& bufferSequence) = 0;
 
-    virtual void WriteSome(const void* data, size_t size) = 0;
+    virtual void WriteSome(const IConstBufferSequence& bufferSequence) = 0;
 
     virtual void Close() = 0;
 };
+
 
 struct IUnbufferedByteStreamListener
 {

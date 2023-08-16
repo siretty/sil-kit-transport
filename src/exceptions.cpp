@@ -24,5 +24,15 @@ auto ByteStreamAlreadySendingError::what() const noexcept -> const char*
     return "byte stream is already sending data";
 }
 
+auto ByteStreamAlreadyReadingError::what() const noexcept -> const char*
+{
+    return "byte stream is already reading";
+}
+
+auto ByteStreamAlreadyWritingError::what() const noexcept -> const char*
+{
+    return "byte stream is already writing";
+}
+
 
 } // namespace SilKitTransport
