@@ -1,6 +1,22 @@
+#include "asiogenericunbufferedbytestream.hpp"
+#include "bufferedbytestream.hpp"
+
+#include "asio.hpp"
+
+
 int main()
 {
-    //
+    asio::io_context ioContext;
+
+    const auto endpoint = asio::ip::tcp::endpoint{asio::ip::address::from_string("0.0.0.0"), 0};
+
+
+    SilKitTransport::AsioGenericUnbufferedByteStream asioGenericUnbufferedByteStream{};
+    SilKitTransport::BufferedByteStream bufferedByteStream{};
+
+    ioContext.run();
+
+    return 0;
 }
 
 /*

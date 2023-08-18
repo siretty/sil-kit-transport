@@ -9,6 +9,12 @@ add_library("${PROJECT_NAME}"
         iunbufferedbytestream.hpp
         asiogenericunbufferedbytestream.cpp
         asiogenericunbufferedbytestream.hpp
+        messagestream.cpp
+        messagestream.hpp
+        ibufferedbytestream.cpp
+        ibufferedbytestream.hpp
+        bufferedbytestream.cpp
+        bufferedbytestream.hpp
 )
 
 target_link_libraries("${PROJECT_NAME}"
@@ -22,6 +28,7 @@ target_include_directories("${PROJECT_NAME}"
 
 add_executable("${PROJECT_NAME}-TestRunner"
         asiogenericunbufferedbytestream-test.cpp
+        bufferedbytestream-test.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}-TestRunner"

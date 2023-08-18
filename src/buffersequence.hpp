@@ -8,6 +8,8 @@
 #include <vector>
 #include <list>
 
+#include <cassert>
+
 
 namespace SilKitTransport {
 
