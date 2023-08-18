@@ -9,17 +9,18 @@
 namespace SilKitTransport {
 
 
+struct StreamAlreadyReadingError : std::exception
+{
+    auto what() const noexcept -> const char* override;
+};
+
+struct StreamAlreadyWritingError : std::exception
+{
+    auto what() const noexcept -> const char* override;
+};
+
+
 struct ByteStreamNotSetUpError : std::exception
-{
-    auto what() const noexcept -> const char* override;
-};
-
-struct ByteStreamAlreadyReadingError : std::exception
-{
-    auto what() const noexcept -> const char* override;
-};
-
-struct ByteStreamAlreadyWritingError : std::exception
 {
     auto what() const noexcept -> const char* override;
 };

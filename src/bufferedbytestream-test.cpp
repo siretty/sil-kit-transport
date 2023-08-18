@@ -34,10 +34,16 @@ public:
     {
     }
 
-    auto GetWritten() -> ConstBuffer { return ConstBuffer{_writtenData.data(), _writtenData.size()}; }
+    auto GetWritten() -> ConstBuffer
+    {
+        return ConstBuffer{_writtenData.data(), _writtenData.size()};
+    }
 
 public: // IUnbufferedByteStream
-    void SetUp(IUnbufferedByteStreamListener& listener) override { _listener = &listener; }
+    void SetUp(IUnbufferedByteStreamListener& listener) override
+    {
+        _listener = &listener;
+    }
 
     void ReadSome(const IMutableBufferSequence& bufferSequence) override
     {
@@ -133,6 +139,7 @@ TEST(BufferedByteStream, Basic)
 
     bufferedByteStream.SetUp(callbacks);
     bufferedByteStream.Read(MutableBuffer{rd.data(), rd.size()});
+    bufferedByteStream.Write(ConstBuffer{wr.data(), wr.size()});
     bufferedByteStream.Write(ConstBuffer{wr.data(), wr.size()});
 
     ASSERT_TRUE(readDone);

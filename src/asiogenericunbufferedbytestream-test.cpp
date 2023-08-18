@@ -3,6 +3,10 @@
 
 #include "asiogenericunbufferedbytestream.hpp"
 
+#include <future>
+#include <random>
+#include <thread>
+
 #include <cstring>
 
 #include "asio.hpp"
@@ -126,10 +130,24 @@ TEST(AsioGenericUnbufferedByteStream, Basic)
     {
         asio::io_context ioContext;
 
-        asio::local::stream_protocol::socket socketOne{ioContext};
-        asio::local::stream_protocol::socket socketTwo{ioContext};
+        asio::ip::tcp::acceptor acceptor{ioContext, asio::ip::tcp::endpoint{asio::ip::make_address("127.0.0.1"), 0}};
 
-        asio::local::connect_pair(socketOne, socketTwo);
+        auto socketTwoFuture = [&acceptor] {
+            // Visual Studios C++ standard library requires types in promises to be default constructible (wtf!)
+            std::promise<std::unique_ptr<asio::ip::tcp::socket>> promise;
+            auto future = promise.get_future();
+
+            std::thread{[&acceptor, promise = std::move(promise)]() mutable {
+                promise.set_value_at_thread_exit(std::make_unique<asio::ip::tcp::socket>(acceptor.accept()));
+            }}.detach();
+
+            return future;
+        }();
+
+        asio::ip::tcp::socket socketOne{ioContext};
+        socketOne.connect(acceptor.local_endpoint());
+
+        asio::ip::tcp::socket socketTwo{std::move(*socketTwoFuture.get())};
 
         AsioGenericUnbufferedByteStream streamOne{std::move(socketOne)};
         AsioGenericUnbufferedByteStream streamTwo{std::move(socketTwo)};

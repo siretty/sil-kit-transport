@@ -24,12 +24,12 @@ auto ByteStreamAlreadySendingError::what() const noexcept -> const char*
     return "byte stream is already sending data";
 }
 
-auto ByteStreamAlreadyReadingError::what() const noexcept -> const char*
+auto StreamAlreadyReadingError::what() const noexcept -> const char*
 {
     return "byte stream is already reading";
 }
 
-auto ByteStreamAlreadyWritingError::what() const noexcept -> const char*
+auto StreamAlreadyWritingError::what() const noexcept -> const char*
 {
     return "byte stream is already writing";
 }

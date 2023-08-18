@@ -50,7 +50,7 @@ void AsioGenericUnbufferedByteStream::ReadSome(const IMutableBufferSequence &buf
 {
     if (_reading)
     {
-        throw ByteStreamAlreadyReadingError{};
+        throw StreamAlreadyReadingError{};
     }
 
     if (_closed)
@@ -77,7 +77,7 @@ void AsioGenericUnbufferedByteStream::WriteSome(const IConstBufferSequence &buff
 {
     if (_writing)
     {
-        throw ByteStreamAlreadyWritingError{};
+        throw StreamAlreadyWritingError{};
     }
 
     if (_closed)
@@ -131,7 +131,7 @@ void AsioGenericUnbufferedByteStream::OnWriteSomeComplete(asio::error_code const
         return;
     }
 
-    _reading = false;
+    _writing = false;
     _listener->OnWriteDone(*this, bytesTransferred);
 }
 

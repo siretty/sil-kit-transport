@@ -2,97 +2,64 @@
 #define SILKITTRANSPORT_MESSAGESTREAM_HPP
 
 
-#include "iunbufferedbytestream.hpp"
+#include "imessagestream.hpp"
+
+#include "ibufferedbytestream.hpp"
 
 #include <array>
 #include <deque>
 #include <memory>
 #include <vector>
 
+#include <cstdint>
+
 
 namespace SilKitTransport {
 
 
-struct IUnbufferedMessageStreamListener;
-
-
-struct IUnbufferedMessageStream
+class MessageStream
+    : public IMessageStream
+    , private IBufferedByteStreamListener
 {
-    virtual ~IUnbufferedMessageStream() = default;
-
-    virtual void SetUp(IUnbufferedMessageStreamListener& listener) = 0;
-
-    virtual void ReadMessage() = 0;
-
-    virtual void WriteMessage(std::vector<char> message) = 0;
-
-    virtual void Close() = 0;
-};
-
-
-struct IUnbufferedMessageStreamListener
-{
-    virtual ~IUnbufferedMessageStreamListener() = default;
-
-    virtual void OnReadDone(IUnbufferedMessageStream& stream, std::vector<char> message) = 0;
-
-    virtual void OnWriteDone(IUnbufferedMessageStream& stream) = 0;
-
-    virtual void OnClose(IUnbufferedMessageStream& stream, const std::error_code& errorCode) = 0;
-};
-
-
-class UnbufferedMessageStream
-    : public IUnbufferedMessageStream
-    , private IUnbufferedByteStreamListener
-{
-    template <typename Void>
-    struct BufferSequence : IBufferSequence<Void>
+    enum ReadState
     {
-        struct Item
-        {
-            std::array<char, 4> length{};
-            std::vector<char> message;
-        };
-
-        std::vector<Item> buffers;
-
-        auto GetSequenceItem(size_t index) const -> Buffer<Void> override
-        {
-            const auto div = std::div(index, 2);
-            const auto& item = buffers[div.quot];
-            if (div.rem == 0)
-            {
-                return Buffer<Void>{item.length.data(), item.length.size()};
-            }
-            else
-            {
-                return Buffer<void>{item.message.data(), item.message.size()};
-            }
-        }
-
-        auto GetSequenceSize() const -> size_t override { return buffers.size(); }
+        READ_IDLE,
+        READ_SIZE,
+        READ_DATA,
     };
 
-    IUnbufferedMessageStreamListener* _listener{nullptr};
+    enum WriteState
+    {
+        WRITE_IDLE,
+        WRITE_PENDING,
+    };
 
-    std::unique_ptr<IUnbufferedByteStream> _stream{nullptr};
+    IBufferedByteStream* _stream{nullptr};
+    IMessageStreamListener* _listener{nullptr};
+
+    ReadState _readState{READ_IDLE};
+    std::array<uint8_t, 4> _readSize;
+    std::vector<char> _readData;
+
+    WriteState _writeState{WRITE_IDLE};
+    std::array<uint8_t, 4> _writeSize;
+    std::vector<char> _writeData;
 
 public:
-    UnbufferedMessageStream() = default;
+    MessageStream() = default;
 
-    explicit UnbufferedMessageStream(std::unique_ptr<IUnbufferedByteStream> stream);
+    explicit MessageStream(IBufferedByteStream& stream);
 
 public: // IUnbufferedMessageStream
-    void SetUp(IUnbufferedMessageStreamListener& listener) override;
+    void SetUp(IMessageStreamListener& listener) override;
     void ReadMessage() override;
     void WriteMessage(std::vector<char> message) override;
     void Close() override;
 
 private: // IUnbufferedByteStreamListener
-    void OnReadDone(IUnbufferedByteStream& stream, size_t bytesTransferred) override;
-    void OnWriteDone(IUnbufferedByteStream& stream, size_t bytesTransferred) override;
-    void OnClose(IUnbufferedByteStream& stream, const std::error_code& errorCode) override;
+    void OnReadDone(IBufferedByteStream& stream) override;
+    void OnWriteDone(IBufferedByteStream& stream) override;
+    void OnClose(IBufferedByteStream& stream, const std::error_code& errorCode) override;
 };
 
 

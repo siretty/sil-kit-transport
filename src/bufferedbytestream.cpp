@@ -26,7 +26,7 @@ void BufferedByteStream::Read(const IMutableBufferSequence& bufferSequence)
 {
     if (_reading)
     {
-        throw ByteStreamAlreadyReadingError{};
+        throw StreamAlreadyReadingError{};
     }
 
     _reading = true;
@@ -56,7 +56,7 @@ void BufferedByteStream::Write(const IConstBufferSequence& bufferSequence)
 {
     if (_writing)
     {
-        throw ByteStreamAlreadyWritingError{};
+        throw StreamAlreadyWritingError{};
     }
 
     _writing = true;
@@ -67,6 +67,7 @@ void BufferedByteStream::Write(const IConstBufferSequence& bufferSequence)
         total += bufferSequence.GetSequenceItem(index).GetSize();
     }
 
+    _writeBufferData.clear();
     _writeBufferData.reserve(total);
     for (size_t index = 0; index != bufferSequence.GetSequenceSize(); ++index)
     {

@@ -110,7 +110,7 @@ class BufferSpan : public IBufferSequence<Void>
 public:
     BufferSpan() = default;
 
-    BufferSpan(Buffer<void>* first, size_t size)
+    BufferSpan(Buffer<Void>* first, size_t size)
         : _first{first}
         , _size{size}
     {
