@@ -12,6 +12,8 @@ add_library("${PROJECT_NAME}"
     streams/asiogenericunbufferedbytestream.cpp
     streams/bufferedbytestream.cpp
     streams/messagestream.cpp
+
+    streams/traceunbufferedbytestream.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}"

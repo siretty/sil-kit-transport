@@ -1,6 +1,7 @@
 #include "asiogenericunbufferedbytestream.hpp"
 #include "bufferedbytestream.hpp"
 #include "messagestream.hpp"
+#include "traceunbufferedbytestream.hpp"
 
 #include <algorithm>
 #include <deque>
