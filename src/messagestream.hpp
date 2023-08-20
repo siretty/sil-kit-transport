@@ -38,11 +38,11 @@ class MessageStream
     IMessageStreamListener* _listener{nullptr};
 
     ReadState _readState{READ_IDLE};
-    std::array<uint8_t, 4> _readSize;
+    std::array<uint8_t, 4> _readSize{};
     std::vector<char> _readData;
 
     WriteState _writeState{WRITE_IDLE};
-    std::array<uint8_t, 4> _writeSize;
+    std::array<uint8_t, 4> _writeSize{};
     std::vector<char> _writeData;
 
 public:
