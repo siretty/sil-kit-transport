@@ -2,6 +2,7 @@
 #include "bufferedbytestream.hpp"
 #include "messagestream.hpp"
 #include "traceunbufferedbytestream.hpp"
+#include "asiotcpunbufferedbytestreamacceptor.hpp"
 
 #include <algorithm>
 #include <deque>
@@ -149,17 +150,65 @@ private:
 };
 
 
-class Server : private IConnectionListener
+class Server
+    : private IUnbufferedByteStreamAcceptorListener
+    , private IConnectionListener
 {
-    asio::ip::tcp::acceptor _acceptor;
+    asio::any_io_executor _ioExecutor;
+    std::vector<std::unique_ptr<IUnbufferedByteStreamAcceptor>> _acceptors;
     std::vector<std::unique_ptr<IConnection>> _connections;
 
 public:
-    Server(const asio::any_io_executor& ioExecutor, const asio::ip::tcp::endpoint& endpoint)
-        : _acceptor{ioExecutor, endpoint}
+    Server(const asio::any_io_executor& ioExecutor)
+        : _ioExecutor{ioExecutor}
     {
-        LogThis() << "accepting on " << _acceptor.local_endpoint() << std::endl;
-        Accept();
+    }
+
+    void AcceptOn(asio::ip::tcp::endpoint endpoint)
+    {
+        asio::ip::tcp::acceptor asioAcceptor{_ioExecutor, endpoint};
+        LogThis() << "accepting on " << asioAcceptor.local_endpoint() << std::endl;
+
+        auto acceptor{std::make_unique<AsioTcpUnbufferedByteStreamAcceptor>(std::move(asioAcceptor))};
+        acceptor->SetListener(*this);
+
+        auto& acceptorRef = *acceptor;
+        _acceptors.emplace_back(std::move(acceptor));
+        acceptorRef.Accept();
+    }
+
+private: // IUnbufferedByteStreamAcceptorListener
+    void OnAccept(IUnbufferedByteStreamAcceptor& acceptor, std::unique_ptr<IUnbufferedByteStream> stream) override
+    {
+        LogThis() << "accepting" << std::endl;
+
+        // LogThis() << "accepting " << socket.remote_endpoint() << " on " << socket.local_endpoint() << std::endl;
+        // auto unbufferedByteStream = std::make_unique<AsioGenericUnbufferedByteStream>(std::move(socket));
+
+        auto connection = std::make_unique<Connection>(Connection{*this, std::move(stream)});
+        connection->Start();
+        _connections.emplace_back(std::move(connection));
+
+        acceptor.Accept();
+    }
+
+    void OnClose(IUnbufferedByteStreamAcceptor& acceptor, std::error_code errorCode) override
+    {
+        LogThis() << "acceptor closed" << std::endl;
+        if (errorCode)
+        {
+            LogThis() << "i/o error: acceptor failed: " << errorCode.message() << std::endl;
+        }
+
+        auto it = std::find_if(_acceptors.begin(), _acceptors.end(), [needle = &acceptor](const auto& hay) -> bool {
+            return hay.get() == needle;
+        });
+
+        if (it != _acceptors.end())
+        {
+            LogThis() << "acceptor removed" << std::endl;
+            _acceptors.erase(it);
+        }
     }
 
 private:
@@ -192,32 +241,6 @@ private:
             LogThis() << "connection removed" << std::endl;
             _connections.erase(it);
         }
-    }
-
-private:
-    void Accept()
-    {
-        _acceptor.async_accept([this](const auto& ec, auto s) {
-            OnAccept(ec, std::move(s));
-        });
-    }
-
-    void OnAccept(const asio::error_code& errorCode, asio::ip::tcp::socket socket)
-    {
-        if (errorCode)
-        {
-            LogThis() << "i/o error: accept failed: " << errorCode.message() << std::endl;
-            return;
-        }
-
-        LogThis() << "accepting " << socket.remote_endpoint() << " on " << socket.local_endpoint() << std::endl;
-
-        auto unbufferedByteStream = std::make_unique<AsioGenericUnbufferedByteStream>(std::move(socket));
-        auto connection = std::make_unique<Connection>(Connection{*this, std::move(unbufferedByteStream)});
-        connection->Start();
-        _connections.emplace_back(std::move(connection));
-
-        Accept();
     }
 
 private:
@@ -358,7 +381,8 @@ int Main(std::string prog, std::vector<std::string> args)
     }
     else if (mode == "server")
     {
-        server = std::make_unique<Server>(ioContext.get_executor(), endpoint);
+        server = std::make_unique<Server>(ioContext.get_executor());
+        server->AcceptOn(endpoint);
     }
     else
     {

@@ -9,6 +9,11 @@
 namespace SilKitTransport {
 
 
+struct AcceptorAlreadyAcceptingError : std::exception
+{
+    auto what() const noexcept -> const char* override;
+};
+
 struct StreamAlreadyReadingError : std::exception
 {
     auto what() const noexcept -> const char* override;

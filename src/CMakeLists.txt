@@ -1,10 +1,10 @@
 
 add_library("${PROJECT_NAME}"
+    acceptors/asiotcpunbufferedbytestreamacceptor.cpp
 
-    utilities/buffersequence.cpp
-    utilities/byteorder.cpp
-    utilities/exceptions.cpp
-
+    # acceptors
+    interfaces/iunbufferedbytestreamacceptor.cpp
+    # streams
     interfaces/ibufferedbytestream.cpp
     interfaces/imessagestream.cpp
     interfaces/iunbufferedbytestream.cpp
@@ -12,8 +12,12 @@ add_library("${PROJECT_NAME}"
     streams/asiogenericunbufferedbytestream.cpp
     streams/bufferedbytestream.cpp
     streams/messagestream.cpp
-
+    # debugging streams
     streams/traceunbufferedbytestream.cpp
+
+    utilities/buffersequence.cpp
+    utilities/byteorder.cpp
+    utilities/exceptions.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}"
@@ -22,6 +26,7 @@ target_link_libraries("${PROJECT_NAME}"
 
 target_include_directories("${PROJECT_NAME}"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/acceptors"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/interfaces"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/streams"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/utilities"

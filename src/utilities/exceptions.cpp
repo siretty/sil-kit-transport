@@ -24,6 +24,11 @@ auto ByteStreamAlreadySendingError::what() const noexcept -> const char*
     return "byte stream is already sending data";
 }
 
+auto AcceptorAlreadyAcceptingError::what() const noexcept -> const char*
+{
+    return "acceptor is already accepting";
+}
+
 auto StreamAlreadyReadingError::what() const noexcept -> const char*
 {
     return "byte stream is already reading";
