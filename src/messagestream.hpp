@@ -51,7 +51,8 @@ public:
     explicit MessageStream(IBufferedByteStream& stream);
 
 public: // IUnbufferedMessageStream
-    void SetUp(IMessageStreamListener& listener) override;
+    void SetListener(IMessageStreamListener& listener) override;
+    void ClearListener() override;
     void ReadMessage() override;
     void WriteMessage(std::vector<char> message) override;
     void Close() override;

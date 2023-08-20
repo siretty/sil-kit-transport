@@ -10,13 +10,19 @@ namespace SilKitTransport {
 MessageStream::MessageStream(IBufferedByteStream& stream)
     : _stream{&stream}
 {
-    _stream->SetUp(*this);
+    _stream->SetListener(*this);
 }
 
 
-void MessageStream::SetUp(IMessageStreamListener& listener)
+void MessageStream::SetListener(IMessageStreamListener& listener)
 {
     _listener = &listener;
+}
+
+
+void MessageStream::ClearListener()
+{
+    _listener = nullptr;
 }
 
 

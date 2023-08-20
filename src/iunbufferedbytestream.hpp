@@ -19,7 +19,9 @@ struct IUnbufferedByteStream
 {
     virtual ~IUnbufferedByteStream() = default;
 
-    virtual void SetUp(IUnbufferedByteStreamListener& listener) = 0;
+    virtual void SetListener(IUnbufferedByteStreamListener& listener) = 0;
+
+    virtual void ClearListener() = 0;
 
     virtual void ReadSome(const IMutableBufferSequence& bufferSequence) = 0;
 

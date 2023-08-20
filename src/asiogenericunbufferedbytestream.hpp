@@ -33,21 +33,16 @@ public:
     explicit AsioGenericUnbufferedByteStream(AsioSocket socket);
 
 public: // IByteStream
-    void SetUp(IUnbufferedByteStreamListener &listener) override;
-
+    void SetListener(IUnbufferedByteStreamListener &listener) override;
+    void ClearListener() override;
     void ReadSome(const IMutableBufferSequence &bufferSequence) override;
-
     void WriteSome(const IConstBufferSequence &bufferSequence) override;
-
     void Close() override;
 
 private:
     void OnReadSomeComplete(const asio::error_code &errorCode, size_t bytesTransferred);
-
     void OnWriteSomeComplete(const asio::error_code &errorCode, size_t bytesTransferred);
-
     void HandleIoError(const asio::error_code &errorCode);
-
     void DoClose(const asio::error_code &errorCode);
 };
 

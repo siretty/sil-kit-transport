@@ -36,7 +36,8 @@ public:
     explicit BufferedByteStream(IUnbufferedByteStream& stream);
 
 public: // IBufferedByteStream
-    void SetUp(IBufferedByteStreamListener& listener) override;
+    void SetListener(IBufferedByteStreamListener& listener) override;
+    void ClearListener() override;
     void Read(const IMutableBufferSequence& bufferSequence) override;
     void Write(const IConstBufferSequence& bufferSequence) override;
     void Close() override;

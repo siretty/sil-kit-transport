@@ -152,10 +152,10 @@ TEST(AsioGenericUnbufferedByteStream, Basic)
         AsioGenericUnbufferedByteStream streamOne{std::move(socketOne)};
         AsioGenericUnbufferedByteStream streamTwo{std::move(socketTwo)};
 
-        streamOne.SetUp(writeAll);
+        streamOne.SetListener(writeAll);
         writeAll.StartWrite(streamOne);
 
-        streamTwo.SetUp(readAll);
+        streamTwo.SetListener(readAll);
         readAll.StartRead(streamTwo);
 
         ioContext.run();

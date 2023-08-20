@@ -40,9 +40,15 @@ AsioGenericUnbufferedByteStream::AsioGenericUnbufferedByteStream(AsioSocket sock
 }
 
 
-void AsioGenericUnbufferedByteStream::SetUp(IUnbufferedByteStreamListener &listener)
+void AsioGenericUnbufferedByteStream::SetListener(IUnbufferedByteStreamListener &listener)
 {
     _listener = &listener;
+}
+
+
+void AsioGenericUnbufferedByteStream::ClearListener()
+{
+    _listener = nullptr;
 }
 
 

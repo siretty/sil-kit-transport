@@ -16,7 +16,9 @@ struct IMessageStream
 {
     virtual ~IMessageStream() = default;
 
-    virtual void SetUp(IMessageStreamListener& listener) = 0;
+    virtual void SetListener(IMessageStreamListener& listener) = 0;
+
+    virtual void ClearListener() = 0;
 
     virtual void ReadMessage() = 0;
 

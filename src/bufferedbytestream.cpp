@@ -12,13 +12,19 @@ namespace SilKitTransport {
 BufferedByteStream::BufferedByteStream(IUnbufferedByteStream& stream)
     : _stream{&stream}
 {
-    _stream->SetUp(*this);
+    _stream->SetListener(*this);
 }
 
 
-void BufferedByteStream::SetUp(IBufferedByteStreamListener& listener)
+void BufferedByteStream::SetListener(IBufferedByteStreamListener& listener)
 {
     _listener = &listener;
+}
+
+
+void BufferedByteStream::ClearListener()
+{
+    _listener = nullptr;
 }
 
 

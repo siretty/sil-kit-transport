@@ -87,7 +87,7 @@ public:
     void Start() override
     {
         LogThis() << "starting" << std::endl;
-        _messageStream->SetUp(*this);
+        _messageStream->SetListener(*this);
         _messageStream->ReadMessage();
         LogThis() << "starting done" << std::endl;
     }

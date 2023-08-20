@@ -40,7 +40,7 @@ public:
     }
 
 public: // IUnbufferedByteStream
-    void SetUp(IUnbufferedByteStreamListener& listener) override
+    void SetListener(IUnbufferedByteStreamListener& listener) override
     {
         _listener = &listener;
     }
@@ -137,7 +137,7 @@ TEST(BufferedByteStream, Basic)
         ASSERT_EQ((std::string{static_cast<const char*>(written.GetData()), written.GetSize()}), wr);
     };
 
-    bufferedByteStream.SetUp(callbacks);
+    bufferedByteStream.SetListener(callbacks);
     bufferedByteStream.Read(MutableBuffer{rd.data(), rd.size()});
     bufferedByteStream.Write(ConstBuffer{wr.data(), wr.size()});
     bufferedByteStream.Write(ConstBuffer{wr.data(), wr.size()});
