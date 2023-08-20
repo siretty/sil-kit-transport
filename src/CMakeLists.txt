@@ -1,17 +1,17 @@
 
 add_library("${PROJECT_NAME}"
 
-    buffersequence.cpp
-    byteorder.cpp
-    exceptions.cpp
+    utilities/buffersequence.cpp
+    utilities/byteorder.cpp
+    utilities/exceptions.cpp
 
-    ibufferedbytestream.cpp
-    imessagestream.cpp
-    iunbufferedbytestream.cpp
+    interfaces/ibufferedbytestream.cpp
+    interfaces/imessagestream.cpp
+    interfaces/iunbufferedbytestream.cpp
 
-    asiogenericunbufferedbytestream.cpp
-    bufferedbytestream.cpp
-    messagestream.cpp
+    streams/asiogenericunbufferedbytestream.cpp
+    streams/bufferedbytestream.cpp
+    streams/messagestream.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}"
@@ -20,12 +20,15 @@ target_link_libraries("${PROJECT_NAME}"
 
 target_include_directories("${PROJECT_NAME}"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/interfaces"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/streams"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/utilities"
 )
 
 
 add_executable("${PROJECT_NAME}-TestRunner"
-    asiogenericunbufferedbytestream-test.cpp
-    bufferedbytestream-test.cpp
+    streams/asiogenericunbufferedbytestream-test.cpp
+    streams/bufferedbytestream-test.cpp
 )
 
 target_link_libraries("${PROJECT_NAME}-TestRunner"

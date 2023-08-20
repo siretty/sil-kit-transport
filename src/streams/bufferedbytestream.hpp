@@ -24,8 +24,8 @@ class BufferedByteStream
     bool _writing{false};
 
     std::vector<MutableBuffer> _readBufferSequence;
-    std::vector<char> _readBufferData{};
-    MutableBuffer _readBuffer{};
+    std::vector<char> _readBufferStorage{};
+    MutableBuffer _readBufferData{}, _readBufferFree{};
 
     std::vector<char> _writeBufferData{};
     ConstBuffer _writeBuffer{};
@@ -46,6 +46,10 @@ private: // IUnbufferedByteStreamListener
     void OnReadDone(IUnbufferedByteStream& stream, size_t bytesTransferred) override;
     void OnWriteDone(IUnbufferedByteStream& stream, size_t bytesTransferred) override;
     void OnClose(IUnbufferedByteStream& stream, const std::error_code& errorCode) override;
+
+private:
+    auto FillReadBufferSequence() -> size_t;
+    void InitiateReadSome(size_t bufferSize);
 };
 
 

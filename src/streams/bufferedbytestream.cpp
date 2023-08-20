@@ -37,24 +37,24 @@ void BufferedByteStream::Read(const IMutableBufferSequence& bufferSequence)
 
     _reading = true;
 
-    size_t total{0};
     _readBufferSequence.resize(bufferSequence.GetSequenceSize());
     for (size_t index = 0; index != _readBufferSequence.size(); ++index)
     {
         _readBufferSequence[index] = bufferSequence.GetSequenceItem(index);
-        total += _readBufferSequence[index].GetSize();
     }
 
-    if (total == 0)
+    size_t remainingByteCount{FillReadBufferSequence()};
+
+    if (remainingByteCount == 0)
     {
         _reading = false;
         _listener->OnReadDone(*this);
+        return;
     }
 
-    _readBufferData.resize(total);
-    _readBuffer = MutableBuffer{_readBufferData.data(), _readBufferData.size()};
+    assert(_readBufferData.GetSize() == 0);
 
-    _stream->ReadSome(_readBuffer);
+    InitiateReadSome(remainingByteCount);
 }
 
 
@@ -99,23 +99,20 @@ void BufferedByteStream::OnReadDone(IUnbufferedByteStream& stream, size_t bytesT
 {
     (void)(stream);
 
-    _readBuffer.SliceOff(bytesTransferred);
+    _readBufferData = _readBufferFree.SliceOff(bytesTransferred);
 
-    if (_readBuffer.GetSize() == 0)
+    size_t remainingByteCount{FillReadBufferSequence()};
+
+    if (remainingByteCount == 0)
     {
-        _readBuffer = MutableBuffer{_readBufferData.data(), _readBufferData.size()};
-        for (auto& buffer : _readBufferSequence)
-        {
-            std::memcpy(buffer.GetData(), _readBuffer.GetData(), buffer.GetSize());
-            _readBuffer.SliceOff(buffer.GetSize());
-        }
-
         _reading = false;
         _listener->OnReadDone(*this);
         return;
     }
 
-    _stream->ReadSome(_readBuffer);
+    assert(_readBufferData.GetSize() == 0);
+
+    InitiateReadSome(remainingByteCount);
 }
 
 
@@ -140,6 +137,35 @@ void BufferedByteStream::OnClose(IUnbufferedByteStream& stream, const std::error
 {
     (void)(stream);
     _listener->OnClose(*this, errorCode);
+}
+
+auto BufferedByteStream::FillReadBufferSequence() -> size_t
+{
+    size_t remaining{0};
+
+    for (auto& buffer : _readBufferSequence)
+    {
+        size_t byteCount{std::min(_readBufferData.GetSize(), buffer.GetSize())};
+        std::memcpy(buffer.GetData(), _readBufferData.GetData(), byteCount);
+
+        buffer.SliceOff(byteCount);
+        _readBufferData.SliceOff(byteCount);
+
+        remaining += buffer.GetSize();
+    }
+
+    return remaining;
+}
+
+void BufferedByteStream::InitiateReadSome(size_t bufferSize)
+{
+    _readBufferStorage.reserve(4096);
+    _readBufferStorage.resize(std::max<size_t>(bufferSize, _readBufferStorage.capacity()));
+
+    _readBufferData = MutableBuffer{};
+    _readBufferFree = MutableBuffer{_readBufferStorage.data(), _readBufferStorage.size()};
+
+    _stream->ReadSome(_readBufferFree);
 }
 
 

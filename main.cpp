@@ -2,8 +2,6 @@
 #include "bufferedbytestream.hpp"
 #include "messagestream.hpp"
 
-#include "asio.hpp"
-
 #include <algorithm>
 #include <deque>
 #include <iostream>
