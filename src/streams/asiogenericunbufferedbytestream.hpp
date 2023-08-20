@@ -32,7 +32,7 @@ class AsioGenericUnbufferedByteStream final : public IUnbufferedByteStream
 public:
     explicit AsioGenericUnbufferedByteStream(AsioSocket socket);
 
-public: // IByteStream
+public: // IUnbufferedByteStream
     void SetListener(IUnbufferedByteStreamListener &listener) override;
     void ClearListener() override;
     void ReadSome(const IMutableBufferSequence &bufferSequence) override;

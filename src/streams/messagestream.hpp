@@ -50,7 +50,7 @@ public:
 
     explicit MessageStream(IBufferedByteStream& stream);
 
-public: // IUnbufferedMessageStream
+public: // IMessageStream
     void SetListener(IMessageStreamListener& listener) override;
     void ClearListener() override;
     void ReadMessage() override;
