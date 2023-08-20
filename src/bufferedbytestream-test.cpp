@@ -45,6 +45,11 @@ public: // IUnbufferedByteStream
         _listener = &listener;
     }
 
+    void ClearListener() override
+    {
+        _listener = nullptr;
+    }
+
     void ReadSome(const IMutableBufferSequence& bufferSequence) override
     {
         size_t bytesTransferred{0};
