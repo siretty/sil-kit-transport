@@ -1,9 +1,19 @@
 
 add_library("${PROJECT_NAME}"
-    acceptors/asiotcpunbufferedbytestreamacceptor.cpp
+    silkittransport.cpp
+
+    acceptors/asiotcpacceptor.cpp
+
+    connectors/asiotcpconnector.cpp
+
+    contexts/asioiocontext.cpp
 
     # acceptors
-    interfaces/iunbufferedbytestreamacceptor.cpp
+    interfaces/iacceptor.cpp
+    # connectors
+    interfaces/iconnector.cpp
+    # contexts
+    interfaces/iiocontext.hpp
     # streams
     interfaces/ibufferedbytestream.cpp
     interfaces/imessagestream.cpp
@@ -27,6 +37,8 @@ target_link_libraries("${PROJECT_NAME}"
 target_include_directories("${PROJECT_NAME}"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/acceptors"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/connectors"
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/contexts"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/interfaces"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/streams"
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/utilities"

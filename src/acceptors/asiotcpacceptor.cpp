@@ -1,4 +1,4 @@
-#include "asiotcpunbufferedbytestreamacceptor.hpp"
+#include "asiotcpacceptor.hpp"
 
 #include "asiogenericunbufferedbytestream.hpp"
 #include "exceptions.hpp"
@@ -7,25 +7,25 @@
 namespace SilKitTransport {
 
 
-AsioTcpUnbufferedByteStreamAcceptor::AsioTcpUnbufferedByteStreamAcceptor(AsioAcceptor acceptor)
+AsioTcpAcceptor::AsioTcpAcceptor(AsioAcceptor acceptor)
     : _acceptor{std::move(acceptor)}
 {
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::SetListener(IUnbufferedByteStreamAcceptorListener& listener)
+void AsioTcpAcceptor::SetListener(IAcceptorListener& listener)
 {
     _listener = &listener;
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::ClearListener()
+void AsioTcpAcceptor::ClearListener()
 {
     _listener = nullptr;
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::Accept()
+void AsioTcpAcceptor::Accept()
 {
     if (_accepting)
     {
@@ -45,14 +45,13 @@ void AsioTcpUnbufferedByteStreamAcceptor::Accept()
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::Close()
+void AsioTcpAcceptor::Close()
 {
-    _acceptor.close();
+    DoClose(asio::error_code{});
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::OnAcceptComplete(asio::error_code const& errorCode,
-                                                           AsioTcpUnbufferedByteStreamAcceptor::AsioSocket socket)
+void AsioTcpAcceptor::OnAcceptComplete(asio::error_code const& errorCode, AsioTcpAcceptor::AsioSocket socket)
 {
     if (errorCode)
     {
@@ -67,13 +66,13 @@ void AsioTcpUnbufferedByteStreamAcceptor::OnAcceptComplete(asio::error_code cons
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::HandleIoError(asio::error_code const& errorCode)
+void AsioTcpAcceptor::HandleIoError(asio::error_code const& errorCode)
 {
     DoClose(errorCode);
 }
 
 
-void AsioTcpUnbufferedByteStreamAcceptor::DoClose(asio::error_code const& errorCode)
+void AsioTcpAcceptor::DoClose(asio::error_code const& errorCode)
 {
     bool expected{false};
     if (_closed.compare_exchange_strong(expected, true))

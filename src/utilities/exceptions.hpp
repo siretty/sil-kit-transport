@@ -14,6 +14,13 @@ struct AcceptorAlreadyAcceptingError : std::exception
     auto what() const noexcept -> const char* override;
 };
 
+
+struct ConnectorAlreadyConnectingError : std::exception
+{
+    auto what() const noexcept -> const char* override;
+};
+
+
 struct StreamAlreadyReadingError : std::exception
 {
     auto what() const noexcept -> const char* override;

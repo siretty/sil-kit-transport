@@ -112,7 +112,7 @@ void AsioGenericUnbufferedByteStream::Close()
         return;
     }
 
-    DoClose(std::error_code{});
+    DoClose(asio::error_code{});
 }
 
 

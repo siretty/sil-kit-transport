@@ -4,6 +4,29 @@
 namespace SilKitTransport {
 
 
+auto AcceptorAlreadyAcceptingError::what() const noexcept -> const char*
+{
+    return "acceptor is already accepting";
+}
+
+
+auto ConnectorAlreadyConnectingError::what() const noexcept -> const char*
+{
+    return "connector is already connecting";
+}
+
+
+auto StreamAlreadyReadingError::what() const noexcept -> const char*
+{
+    return "byte stream is already reading";
+}
+
+auto StreamAlreadyWritingError::what() const noexcept -> const char*
+{
+    return "byte stream is already writing";
+}
+
+
 auto ByteStreamAlreadyStartedError::what() const noexcept -> const char*
 {
     return "byte stream has already been started";
@@ -22,21 +45,6 @@ auto ByteStreamAlreadyClosedError::what() const noexcept -> const char*
 auto ByteStreamAlreadySendingError::what() const noexcept -> const char*
 {
     return "byte stream is already sending data";
-}
-
-auto AcceptorAlreadyAcceptingError::what() const noexcept -> const char*
-{
-    return "acceptor is already accepting";
-}
-
-auto StreamAlreadyReadingError::what() const noexcept -> const char*
-{
-    return "byte stream is already reading";
-}
-
-auto StreamAlreadyWritingError::what() const noexcept -> const char*
-{
-    return "byte stream is already writing";
 }
 
 

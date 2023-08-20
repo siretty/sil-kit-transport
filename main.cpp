@@ -1,17 +1,20 @@
-#include "asiogenericunbufferedbytestream.hpp"
 #include "bufferedbytestream.hpp"
 #include "messagestream.hpp"
-#include "traceunbufferedbytestream.hpp"
-#include "asiotcpunbufferedbytestreamacceptor.hpp"
+
+#include "silkittransport.hpp"
+#include "iiocontext.hpp"
+#include "iconnector.hpp"
+#include "iacceptor.hpp"
 
 #include <algorithm>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <memory>
 #include <vector>
 
-#include "asio.hpp"
+#include <cstring>
 
 
 namespace {
@@ -151,25 +154,22 @@ private:
 
 
 class Server
-    : private IUnbufferedByteStreamAcceptorListener
+    : private IAcceptorListener
     , private IConnectionListener
 {
-    asio::any_io_executor _ioExecutor;
-    std::vector<std::unique_ptr<IUnbufferedByteStreamAcceptor>> _acceptors;
+    IIoContext* _ioContext{nullptr};
+    std::vector<std::unique_ptr<IAcceptor>> _acceptors;
     std::vector<std::unique_ptr<IConnection>> _connections;
 
 public:
-    Server(const asio::any_io_executor& ioExecutor)
-        : _ioExecutor{ioExecutor}
+    explicit Server(IIoContext& ioContext)
+        : _ioContext{&ioContext}
     {
     }
 
-    void AcceptOn(asio::ip::tcp::endpoint endpoint)
+    void AcceptTcp(const std::string& address, uint16_t port)
     {
-        asio::ip::tcp::acceptor asioAcceptor{_ioExecutor, endpoint};
-        LogThis() << "accepting on " << asioAcceptor.local_endpoint() << std::endl;
-
-        auto acceptor{std::make_unique<AsioTcpUnbufferedByteStreamAcceptor>(std::move(asioAcceptor))};
+        auto acceptor{_ioContext->MakeTcpAcceptor(address, port)};
         acceptor->SetListener(*this);
 
         auto& acceptorRef = *acceptor;
@@ -177,13 +177,10 @@ public:
         acceptorRef.Accept();
     }
 
-private: // IUnbufferedByteStreamAcceptorListener
-    void OnAccept(IUnbufferedByteStreamAcceptor& acceptor, std::unique_ptr<IUnbufferedByteStream> stream) override
+private: // IAcceptorListener
+    void OnAccept(IAcceptor& acceptor, std::unique_ptr<IUnbufferedByteStream> stream) override
     {
         LogThis() << "accepting" << std::endl;
-
-        // LogThis() << "accepting " << socket.remote_endpoint() << " on " << socket.local_endpoint() << std::endl;
-        // auto unbufferedByteStream = std::make_unique<AsioGenericUnbufferedByteStream>(std::move(socket));
 
         auto connection = std::make_unique<Connection>(Connection{*this, std::move(stream)});
         connection->Start();
@@ -192,7 +189,7 @@ private: // IUnbufferedByteStreamAcceptorListener
         acceptor.Accept();
     }
 
-    void OnClose(IUnbufferedByteStreamAcceptor& acceptor, std::error_code errorCode) override
+    void OnClose(IAcceptor& acceptor, std::error_code errorCode) override
     {
         LogThis() << "acceptor closed" << std::endl;
         if (errorCode)
@@ -262,24 +259,50 @@ struct IClientListener
 };
 
 
-class Client : private IConnectionListener
+class Client
+    : private IConnectorListener
+    , private IConnectionListener
 {
-    asio::ip::tcp::socket _socket;
+    IIoContext* _ioContext{nullptr};
+
+    std::unique_ptr<IConnector> _connector;
     std::unique_ptr<IConnection> _connection;
 
     IClientListener* _listener{nullptr};
 
 public:
-    Client(const asio::any_io_executor& ioExecutor, const asio::ip::tcp::endpoint& endpoint, IClientListener& listener)
-        : _socket{ioExecutor}
+    Client(IIoContext& ioContext, const std::string& address, uint16_t port, IClientListener& listener)
+        : _ioContext{&ioContext}
+        , _connector{_ioContext->MakeTcpConnector()}
         , _listener{&listener}
     {
-        Connect(endpoint);
+        _connector->SetListener(*this);
+        _connector->Connect(address, port);
     }
 
     void Write(std::vector<char> message)
     {
         _connection->Write(std::move(message));
+    }
+
+private: // IConnectorListener
+    void OnConnect(IConnector& connector, std::unique_ptr<IUnbufferedByteStream> stream) override
+    {
+        _connection = std::make_unique<Connection>(Connection{*this, std::move(stream)});
+        _connection->Start();
+
+        _listener->OnConnected(*this);
+    }
+
+    void OnClose(IConnector& connector, std::error_code const& errorCode) override
+    {
+        if (errorCode)
+        {
+            LogThis() << "i/o error: connect failed: " << errorCode.message() << std::endl;
+            return;
+        }
+
+        LogThis() << "connector closed" << std::endl;
     }
 
 private:
@@ -293,31 +316,6 @@ private:
     void OnClose(IConnection& connection) override
     {
         LogThis() << "connection closed" << std::endl;
-    }
-
-private:
-    void Connect(const asio::ip::tcp::endpoint& endpoint)
-    {
-        _socket.async_connect(endpoint, [this](const asio::error_code& errorCode) {
-            OnConnect(errorCode);
-        });
-    }
-
-    void OnConnect(const asio::error_code& errorCode)
-    {
-        if (errorCode)
-        {
-            LogThis() << "i/o error: connect failed: " << errorCode.message() << std::endl;
-            return;
-        }
-
-        LogThis() << "connected " << _socket.remote_endpoint() << " on " << _socket.local_endpoint() << std::endl;
-
-        auto unbufferedByteStream = std::make_unique<AsioGenericUnbufferedByteStream>(std::move(_socket));
-        _connection = std::make_unique<Connection>(Connection{*this, std::move(unbufferedByteStream)});
-        _connection->Start();
-
-        _listener->OnConnected(*this);
     }
 
 private:
@@ -352,19 +350,17 @@ int Main(std::string prog, std::vector<std::string> args)
 {
     if (args.size() != 3)
     {
-        std::cout << "usage: " << prog << " (client|server) <host> <port>" << std::endl;
+        std::cout << "usage: " << prog << " (client|server) <address> <port>" << std::endl;
         return EXIT_FAILURE;
     }
 
     const std::string mode{args[0]};
-    const std::string host{args[1]};
+    const std::string address{args[1]};
     const std::string portString{args[2]};
 
     const auto port{static_cast<uint16_t>(std::strtol(portString.data(), nullptr, 10))};
 
-    asio::io_context ioContext;
-
-    const auto endpoint = asio::ip::tcp::endpoint{asio::ip::address::from_string(host), port};
+    auto ioContext{MakeIoContext()};
 
     std::unique_ptr<Client> client;
     std::unique_ptr<Server> server;
@@ -377,12 +373,12 @@ int Main(std::string prog, std::vector<std::string> args)
 
     if (mode == "client")
     {
-        client = std::make_unique<Client>(ioContext.get_executor(), endpoint, clientCallbacks);
+        client = std::make_unique<Client>(*ioContext, address, port, clientCallbacks);
     }
     else if (mode == "server")
     {
-        server = std::make_unique<Server>(ioContext.get_executor());
-        server->AcceptOn(endpoint);
+        server = std::make_unique<Server>(*ioContext);
+        server->AcceptTcp(address, port);
     }
     else
     {
@@ -390,7 +386,7 @@ int Main(std::string prog, std::vector<std::string> args)
         return EXIT_FAILURE;
     }
 
-    ioContext.run();
+    ioContext->Run();
 
     return EXIT_SUCCESS;
 }
