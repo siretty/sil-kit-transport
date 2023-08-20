@@ -1,5 +1,7 @@
 #include "byteorder.hpp"
 
+#include <cstddef>
+
 
 namespace SilKitTransport {
 namespace LittleEndian {
